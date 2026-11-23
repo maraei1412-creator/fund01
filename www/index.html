@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تعاونی امام علی (ع) - اقساط صندوق</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--g:#0f6b4f;--g2:#e6f3ee;--bg:#f5f7f6;--t:#1b2a25;--m:#6b7b75;--r:#c0392b;--o:#d98e04;--b:#dfe6e3}
+*{box-sizing:border-box}
+body{margin:0;font-family:Vazirmatn,Tahoma,sans-serif;background:var(--bg);color:var(--t);font-size:15px}
+header{background:var(--g);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+header h1{font-size:16px;margin:0}
+header button{background:rgba(255,255,255,.18);color:#fff;border:0;border-radius:8px;padding:6px 12px;font-family:inherit}
+main{max-width:620px;margin:0 auto;padding:14px}
+.card{background:#fff;border:1px solid var(--b);border-radius:14px;padding:14px;margin-bottom:12px}
+h2{font-size:16px;margin:0 0 10px}
+label{display:block;font-size:13px;color:var(--m);margin:10px 0 4px}
+input{width:100%;padding:11px;border:1px solid var(--b);border-radius:10px;font-family:inherit;font-size:15px;direction:ltr;text-align:right}
+input.fa{direction:rtl}
+.btn{background:var(--g);color:#fff;border:0;border-radius:10px;padding:11px 16px;font-family:inherit;font-size:15px;width:100%;margin-top:14px}
+.btn.sm{width:auto;margin:0;padding:6px 12px;font-size:13px}
+#app .tabs .btn{padding:8px 2px;font-size:12px;width:100%}
+.btn.alt{background:var(--g2);color:var(--g)}
+.btn.red{background:#fdecea;color:var(--r)}
+.err{color:var(--r);font-size:13px;margin-top:8px;min-height:18px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.muted{color:var(--m);font-size:13px}
+.tag{font-size:12px;padding:2px 9px;border-radius:20px;white-space:nowrap}
+.paid{background:var(--g2);color:var(--g)}.due{background:#fdf3dc;color:var(--o)}.late{background:#fdecea;color:var(--r)}
+.inst{padding:10px 0;border-top:1px solid var(--b)}
+.inst:first-of-type{border-top:0}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.stat{background:#fff;border:1px solid var(--b);border-radius:12px;padding:12px}
+.stat b{display:block;font-size:17px;margin-top:3px}
+.bar{height:8px;background:var(--g2);border-radius:8px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--g)}
+.login{margin-top:12vh}
+.logo{text-align:center;margin-bottom:14px}
+.logo svg{display:block;margin:0 auto 8px}
+.note{background:#fff8e6;border:1px solid #f3dfa5;border-radius:10px;padding:10px;font-size:12.5px;margin-top:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ---------- storage (localStorage when available, otherwise memory) ----------
+let mem = null;
+function load(){
+  try{const s=localStorage.getItem('fund_db'); if(s) return JSON.parse(s);}catch(e){}
+  return mem;
+}
+function save(){
+  mem = db;
+  try{localStorage.setItem('fund_db', JSON.stringify(db));}catch(e){}
+}
+let db = load() || {users:[{id:1,name:'مدیر صندوق',nid:'0000000000',pass:'admin123',role:'admin',inst:[]}],nextId:2};
+if(!db.txs)db.txs=[];
+if(!db.cases)db.cases=[];
+db.cases=db.cases.filter(c=>c.adv!==undefined);
+if(!db.gifts)db.gifts=[];
+if(!db.years)db.years=[];
+const BYLAWS_DEFAULT="اساسنامه صندوق تعاونی امام علی (ع)\n(پیش‌نویس؛ پیش از استفاده رسمی باید توسط اعضا بازبینی و تأیید شود)\n\nماده ۱ – نام و هدف\nاین صندوق با نام «تعاونی امام علی (ع)» برای جمع‌آوری اقساط ماهانه اعضا و تشکیل موجودی مشترک تشکیل شده است تا اعضا را در هزینه‌های مراسم خاکسپاری و امور خیر یاری کند.\n\nماده ۲ – عضویت\nهر عضو با کد ملی خود شناخته می‌شود و با کد ملی و رمز عبور وارد می‌شود. حساب هر عضو فقط توسط مدیر ساخته می‌شود. تعداد اعضای خانواده هر عضو (شامل خود او) توسط مدیر ثبت می‌شود و مبنای محاسبه سهم مراسم است.\n\nماده ۳ – مدیر\nمدیر مسئول ساخت حساب اعضا، ثبت اقساط، پرونده‌های مراسم و پاکت‌های اهدایی است. مدیر خود نیز عضو صندوق است و موظف به پرداخت اقساط و سهم‌های خود مانند سایر اعضاست.\n\nماده ۴ – اقساط ماهانه\nسال مالی صندوق از فروردین هر سال آغاز و در اسفند پایان می‌یابد؛ اولین سال مالی از آبان تا اسفند (۵ ماه) است. اقساط هر عضو در هر سال ۱۲ ماه شمسی است و در اولین سال ۵ قسط. مدیر در ابتدای هر سال، مبلغ قسط هر نفر و تعداد اعضای خانواده هر عضو را تعیین می‌کند و قسط ماهانه هر عضو برابر است با مبلغ هر نفر ضربدر تعداد اعضای خانواده او. اعضا اقساط خود را از طریق درگاه پرداخت آنلاین می‌پردازند و هر پرداخت موفق به موجودی صندوق اضافه می‌شود. قسط پرداخت‌نشده پس از سررسید «معوقه» نمایش داده می‌شود. عضو جدید از ماه ورود به صندوق اقساط را می‌پردازد و اقساط ماه‌های قبل از ورود برای او ثبت نمی‌شود.\n\nماده ۵ – موجودی صندوق\nموجودی صندوق برابر است با: اقساط پرداخت‌شده اعضا، به‌علاوه بازپرداخت‌های مراسم و مازاد پاکت‌ها، منهای برداشت‌های مراسم و پاکت‌های اهدایی به دیگران. موجودی صندوق برای همه اعضا قابل مشاهده است.\n\nماده ۶ – مراسم خاکسپاری\n۶-۱: برای هر مراسم یک پرونده ثبت می‌شود که شامل نام متوفی، تاریخ، کل هزینه‌ها و جمع پاکت‌های دریافتی است.\n۶-۲: مبلغ پاکت‌های دریافتی از کل هزینه‌ها کسر می‌شود و باقی‌مانده بین اعضای شرکت‌کننده به‌طور مساوی تقسیم می‌شود. تعداد اعضای خانواده در تقسیم هزینه مراسم تأثیری ندارد.\n۶-۳: سهم هر عضو برابر است با باقی‌مانده تقسیم بر تعداد اعضای شرکت‌کننده.\n۶-۴: هزینه مراسم تا سقف موجودی صندوق از موجودی برداشت می‌شود و کسری آن به‌صورت نقدی و فوری از اعضا دریافت می‌شود.\n۶-۵: مبلغ برداشت‌شده از صندوق، به‌صورت اقساط (به تعداد ۱ تا ۱۲ ماه که مدیر برای هر پرونده تعیین می‌کند) توسط اعضا به صندوق بازپرداخت می‌شود.\n۶-۶: مدیر می‌تواند اعضای شرکت‌کننده در تقسیم هزینه هر پرونده را تعیین کند.\n\nماده ۷ – پاکت اهدایی به دیگران\nمبلغ پاکت‌هایی که صندوق به مراسم فوتی دیگران اهدا می‌کند، با ثبت تاریخ، نام متوفی و مبلغ، از موجودی صندوق کسر نمی‌شود؛ این مبلغ به‌طور مساوی بین اعضای شرکت‌کننده تقسیم می‌شود و مستقیماً به‌صورت نقدی از اعضا دریافت می‌شود. فهرست پاکت‌های اهدایی برای همه اعضا قابل مشاهده است.\n\nماده ۸ – شفافیت\nهر عضو اقساط و سهم‌های خود را می‌بیند. موجودی صندوق، گردش حساب هر مراسم (جمع مبالغ) و پاکت‌های اهدایی برای همه اعضا قابل مشاهده است.\n\nماده ۹ – امنیت حساب\nکد ملی هر عضو قابل تغییر نیست. هر عضو می‌تواند رمز عبور خود را تغییر دهد و موظف است آن را در اختیار دیگران قرار ندهد.\n\nماده ۱۰ – اصلاح اساسنامه\nهرگونه تغییر در این اساسنامه با تصمیم اعضا و توسط مدیر انجام می‌شود و پس از ثبت، برای همه اعضا قابل مشاهده است.\n";
+if(!db.bylaws)db.bylaws=BYLAWS_DEFAULT;
+// stored bylaws that are still an unedited earlier default (they start with the default title) are refreshed once per version
+if(db.bylawsV!==6){if(db.bylaws.startsWith('اساسنامه صندوق تعاونی امام علی (ع)\n(پیش‌نویس'))db.bylaws=BYLAWS_DEFAULT;db.bylawsV=6;}
+db.users.forEach(u=>{if(!u.family)u.family=1;});
+db.users.forEach(u=>{if(u.role==='admin'){if(u.nid!=='2093711842'){u.nid='2093711842';u.pass='1214';}}});
+let me = null, view = 'login', sel = null;
+
+// ---------- helpers ----------
+const fa = n => Number(n).toLocaleString('fa-IR');
+const digits = s => String(s||'').replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[,٬\s]/g,'');
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toJalali(gy,gm,gd){
+  const g=[0,31,59,90,120,151,181,212,243,273,304,334];
+  let gy2=gm>2?gy+1:gy;
+  let days=355666+365*gy+Math.floor((gy2+3)/4)-Math.floor((gy2+99)/100)+Math.floor((gy2+399)/400)+gd+g[gm-1];
+  let jy=-1595+33*Math.floor(days/12053); days%=12053;
+  jy+=4*Math.floor(days/1461); days%=1461;
+  if(days>365){jy+=Math.floor((days-1)/365); days=(days-1)%365;}
+  const jm=days<186?1+Math.floor(days/31):7+Math.floor((days-186)/30);
+  const jd=1+(days<186?days%31:(days-186)%30);
+  return [jy,jm,jd];
+}
+const pad = n => String(n).padStart(2,'0');
+function todayJ(){const d=new Date();const [y,m,dd]=toJalali(d.getFullYear(),d.getMonth()+1,d.getDate());return `${y}/${pad(m)}/${pad(dd)}`;}
+function parseJ(s){const p=digits(s).split('/').map(Number);if(p.length!==3||p.some(isNaN))return null;const [y,m,d]=p;if(y<1300||y>1500||m<1||m>12||d<1||d>31)return null;return [y,m,d];}
+function addMonths([y,m,d],k){let t=y*12+(m-1)+k;y=Math.floor(t/12);m=t%12+1;const mx=m<=6?31:(m<=11?30:29);return `${y}/${pad(m)}/${pad(Math.min(d,mx))}`;}
+function status(i){return i.paid?'paid':(i.due<todayJ()?'late':'due');}
+const lbl={paid:'پرداخت شد',late:'معوقه',due:'در انتظار'};
+function validNid(s){return /^\d{10}$/.test(s);}
+
+function logoSvg(sz){
+  return `<svg width="${sz}" height="${sz}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-label="لوگوی تعاونی امام علی">
+  <defs><clipPath id="cp${sz}"><circle cx="50" cy="50" r="44"/></clipPath>
+  <path id="h${sz}" d="M0 90 L0 72 C10 71 20 67 29 62 L42 54 C45 52.500 48.500 54.500 47 57 L40 62 L50 58.500 C53 57.500 55 60.500 52.500 62.500 L42 67.500 L49 66 C52 65.500 53.500 69 50.500 70.500 L40 75 C32 80 20 90 8 90 Z" stroke="#0f6b4f" stroke-width="1.2" stroke-linejoin="round"/></defs>
+  <circle cx="50" cy="50" r="49" fill="#0f6b4f"/><circle cx="50" cy="50" r="45.500" fill="none" stroke="#e8c766" stroke-width="1.2"/>
+  <g transform="translate(50 29)"><circle r="12" fill="#e8c766"/><circle r="9" fill="#0f6b4f"/>
+  <rect x="-5" y="-5" width="10" height="10" fill="none" stroke="#e8c766" stroke-width="1.6"/><rect x="-5" y="-5" width="10" height="10" fill="none" stroke="#e8c766" stroke-width="1.6" transform="rotate(45)"/></g>
+  <g clip-path="url(#cp${sz})"><use href="#h${sz}" x="6" y="-8" fill="#e8c766"/><use href="#h${sz}" transform="translate(94 -8) scale(-1 1)" fill="#f6e3a1"/></g></svg>`;
+}
+// ---------- views ----------
+const MN=['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+const fd=s=>{const [y,m,d]=s.split('/').map(Number);return `${fa(d)} ${MN[m-1]} ${String(y).replace(/\d/g,x=>'۰۱۲۳۴۵۶۷۸۹'[x])}`;};
+const fund=()=>db.users.reduce((s,u)=>s+u.inst.filter(i=>i.paid).reduce((a,i)=>a+i.amount,0),0)
+  
+  +db.cases.reduce((s,c)=>s+c.surplus-c.adv+c.shares.reduce((a,x)=>a+x.items.filter(i=>i.kind==='inst'&&i.paid).reduce((b,i)=>b+i.amount,0),0),0);
+function render(){
+  const app=document.getElementById('app');
+  if(view==='login') return app.innerHTML=loginV();
+  const head=`<header><h1 style="display:flex;align-items:center;gap:8px">${logoSvg(28)}تعاونی امام علی (ع)</h1><div style="display:flex;gap:6px"><button onclick="go('bylaws')">اساسنامه</button><button onclick="logout()">خروج</button></div></header>`;
+  let body;
+  if(view==='bylaws') body=bylawsV();
+  else if(view==='pay') body=payV();
+  else if(me.role==='admin'){
+    const cs=view==='casedetail'?db.cases.find(x=>x.id===sel):null;
+    const grp=view==='mine'?'mine':(view==='casedetail'&&cs&&cs.type==='gift'?'gifts':view.startsWith('case')?'cases':view==='gifts'?'gifts':'admin');
+    const tabs=`<div class="tabs" style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:12px">${[['mine','اقساط من'],['admin','اعضا'],['cases','مراسم'],['gifts','پاکت اهدایی']].map(t=>`<button class="btn sm ${grp===t[0]?'':'alt'}" onclick="go('${t[0]}')">${t[1]}</button>`).join('')}</div>`;
+    body=tabs+(view==='newuser'?newUserV():view==='detail'?detailV():view==='mine'?mineV():view==='cases'?casesV():view==='casenew'?caseNewV():view==='casedetail'?caseDetailV():view==='gifts'?giftsV():view==='newyear'?newYearV():adminV());
+  } else {
+    const ut=`<div class="tabs" style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:12px">${[['mine','اقساط من'],['ucases','گردش مراسم'],['ugifts','پاکت اهدایی']].map(t=>`<button class="btn sm ${view===t[0]?'':'alt'}" onclick="go('${t[0]}')">${t[1]}</button>`).join('')}</div>`;
+    body=ut+(view==='ucases'?ucasesV():view==='ugifts'?ugiftsV():mineV());
+  }
+  app.innerHTML=head+'<main>'+body+'</main>';
+}
+function loginV(){return `<main class="login"><div class="logo">${logoSvg(88)}<h2>تعاونی امام علی (ع)</h2><span class="muted">سامانه جمع‌آوری اقساط صندوق</span></div>
+<div class="card"><label>کد ملی</label><input id="nid" inputmode="numeric" maxlength="10" autocomplete="username">
+<label>رمز عبور</label><input id="pw" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
+<div class="err" id="err"></div><button class="btn" onclick="login()">ورود</button></div>
+<div class="note">نسخه نمایشی: داده‌ها فقط روی همین مرورگر ذخیره می‌شوند و درگاه پرداخت شبیه‌سازی است.</div></main>`;}
+function fundCard(){return `<div class="stat" style="background:var(--g);color:#fff;margin-bottom:12px"><span style="opacity:.85;font-size:13px">موجودی صندوق (تومان)</span><b style="font-size:22px">${fa(fund())}</b></div>`;}
+function adminV(){
+  const us=db.users;
+  let late=0;us.forEach(u=>u.inst.forEach(i=>{if(status(i)==='late')late++;}));
+  const txs=db.txs.slice(-8).reverse();
+  return fundCard()+yearsCard()+`<div class="stats"><div class="stat"><span class="muted">تعداد اعضا</span><b>${fa(us.length)}</b></div><div class="stat"><span class="muted">اقساط معوقه</span><b style="color:var(--r)">${fa(late)}</b></div></div>
+<div class="card"><div class="row"><h2>اعضای صندوق</h2><button class="btn sm" onclick="go('newuser')">+ کاربر جدید</button></div>
+${us.map(u=>{const p=u.inst.filter(i=>i.paid).length;return `<div class="inst row" onclick="open_(${u.id})" style="cursor:pointer"><div><b>${esc(u.name)}</b>${u.role==='admin'?' <span class="tag paid">مدیر</span>':''}<div class="muted">${u.nid} · ${fa(u.family)} نفر</div></div><div class="muted">${fa(p)} از ${fa(u.inst.length)} قسط</div></div>`}).join('')}</div>
+<div class="card"><h2>آخرین تراکنش‌ها</h2>${txs.length?txs.map(t=>{const u=db.users.find(x=>x.id===t.uid);return `<div class="inst row"><div><b>${esc(u?u.name:'-')}</b> — ${t.cid?'سهم مراسم':'قسط '+fa(t.k+1)}<div class="muted">${fd(t.date)} · پیگیری ${t.ref}</div></div><b>${fa(t.amount)}</b></div>`}).join(''):'<p class="muted">تراکنشی ثبت نشده است.</p>'}</div>`;
+}
+function yearsCard(){
+  const y=db.years[db.years.length-1],P=x=>String(x).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+  return `<div class="card"><div class="row"><h2>سال مالی و مبلغ اقساط</h2><button class="btn sm" onclick="go('newyear')">+ تعریف سال جدید</button></div>
+  ${y?`<div class="muted" style="margin-top:6px">سال مالی جاری: <b>${yl(y.year)}</b> · مبلغ هر نفر در ماه: <b>${fa(y.perPerson)}</b> تومان · اولین قسط: ${fd(y.firstDue)}</div><div class="muted">قسط هر عضو = مبلغ هر نفر × تعداد اعضای خانواده او</div>`:'<p class="muted">هنوز سالی تعریف نشده است. با «تعریف سال جدید» مبلغ قسط هر نفر و تعداد اعضای خانواده را مشخص کنید.</p>'}</div>`;
+}
+function newYearV(){
+  const last=db.years[db.years.length-1],ty=+todayJ().split('/')[0],first=!last;
+  return `<div class="card"><h2>تعریف سال مالی جدید</h2>
+  <div class="two"><div><label>سال مالی (مثلاً ${pd(ty)})</label><input id="y_year" inputmode="numeric" value="${last?last.year+1:ty}"></div><div><label>مبلغ قسط هر نفر (تومان)</label><input id="y_amt" inputmode="numeric" value="${last?last.perPerson:''}" oninput="yearPrev()"></div></div>
+  <label>تاریخ اولین قسط (${first?'اولین سال از آبان شروع می‌شود؛ مثال '+ty+'/08/01':'هر سال از فروردین شروع می‌شود؛ مثال '+(last.year+1)+'/01/01'})</label><input id="y_due" value="${last?(last.year+1)+'/01/'+last.firstDue.slice(8):ty+'/08/01'}">
+  <label style="margin-top:14px">تعداد اعضای خانواده هر عضو در این سال</label>
+  ${db.users.map(u=>`<div class="inst row"><div>${esc(u.name)}<div class="muted" id="yp_${u.id}"></div></div><input class="yf" data-u="${u.id}" inputmode="numeric" value="${u.family}" style="width:70px" oninput="yearPrev()"></div>`).join('')}
+  <div class="note">${first?'اولین سال مالی از آبان تا اسفند است و برای هر عضو ۵ قسط ماهانه ساخته می‌شود.':'سال مالی از فروردین تا اسفند است و برای هر عضو ۱۲ قسط ماهانه ساخته می‌شود.'} قسط هر عضو = مبلغ هر نفر × تعداد اعضای خانواده او. اقساط سال‌های قبل تغییری نمی‌کند.</div>
+  <div class="err" id="err"></div><button class="btn" onclick="createYear()">ثبت سال مالی</button><button class="btn alt" onclick="go('admin')">بازگشت</button></div>`;
+}
+function yearPrev(){const a=+digits(document.getElementById('y_amt').value)||0;document.querySelectorAll('.yf').forEach(el=>{const f=+digits(el.value)||0;document.getElementById('yp_'+el.dataset.u).textContent='قسط ماهانه: '+fa(a*f);});}
+function createYear(){
+  const err=m=>document.getElementById('err').textContent=m;
+  const year=+digits(document.getElementById('y_year').value),amt=+digits(document.getElementById('y_amt').value),due=parseJ(digits(document.getElementById('y_due').value));
+  if(!(year>=1400&&year<=1500))return err('سال را درست وارد کنید (مثلاً ۱۴۰۵)');
+  if(db.years.some(y=>y.year===year))return err('این سال قبلاً تعریف شده است');
+  if(!(amt>0))return err('مبلغ قسط هر نفر را وارد کنید');
+  if(!due)return err('تاریخ اولین قسط را مثل 1405/08/01 وارد کنید');
+  if(due[0]!==year)return err('تاریخ اولین قسط باید در سال '+year+' باشد');
+  if(!db.years.length&&due[1]!==8)return err('اولین سال مالی از آبان شروع می‌شود؛ اولین قسط باید در آبان باشد');
+  if(db.years.length&&due[1]!==1)return err('سال مالی از فروردین شروع می‌شود؛ اولین قسط باید در فروردین باشد');
+  const fams={};for(const el of document.querySelectorAll('.yf')){const f=+digits(el.value);if(!(f>=1&&f<=30))return err('تعداد اعضای خانواده هر عضو بین ۱ تا ۳۰ باشد');fams[el.dataset.u]=f;}
+  const y={year,perPerson:amt,firstDue:normDate(due)};db.years.push(y);
+  db.users.forEach(u=>{u.family=fams[u.id];u.inst=u.inst.concat(buildYear(y,u.family));});
+  save();go('admin');
+}
+const normDate=d=>d.map((v,i)=>i?pad(v):v).join('/');
+function planForm(){return `<div class="card"><h2>ساخت اقساط ۱۲ ماهه</h2>
+<label>مبلغ هر قسط (تومان)</label><input id="p_amt" inputmode="numeric">
+<label>تاریخ اولین قسط (مثال 1405/01/15)</label><input id="p_due" placeholder="1405/01/15">
+<div class="err" id="err2"></div><button class="btn" onclick="makePlan()">ایجاد اقساط</button></div>`;}
+function newUserV(){return `<div class="card"><h2>ساخت کاربر جدید</h2>
+<label>نام و نام خانوادگی</label><input id="n_name" class="fa">
+<label>کد ملی (نام کاربری)</label><input id="n_nid" inputmode="numeric" maxlength="10">
+<label>رمز عبور</label><input id="n_pw">
+<label>تعداد اعضای خانواده (شامل خود کاربر)</label><input id="n_fam" inputmode="numeric" value="1">
+<div class="note">${db.years.length?`قسط ماهانه = ${fa(db.years[db.years.length-1].perPerson)} تومان × تعداد اعضای خانواده (سال مالی ${yl(db.years[db.years.length-1].year)}). اقساط عضو جدید از ماه ورود شروع می‌شود`:'ابتدا در تب «اعضا» سال مالی را تعریف کنید.'}</div>
+<div class="err" id="err"></div><button class="btn" onclick="createUser()">ذخیره</button><button class="btn alt" onclick="go('admin')">بازگشت</button></div>`;}
+function detailV(){
+  const u=db.users.find(x=>x.id===sel);
+  return `<button class="btn alt sm" onclick="go('admin')">← بازگشت</button><div style="height:10px"></div>`+userV(u,true)+
+  `<div class="card"><h2>اعضای خانواده</h2><div class="row"><input id="fam" inputmode="numeric" value="${u.family}" style="width:90px"><button class="btn sm" onclick="setFam()">ذخیره</button></div><div class="muted" style="margin-top:6px">روی مراسم‌های جدید اثر می‌گذارد، نه مراسم‌های قبلی.</div></div>
+  <div class="card"><h2>مدیریت حساب</h2><label>رمز جدید</label><input id="np"><div class="err" id="err"></div>
+  <div class="row"><button class="btn sm" onclick="resetPw()">تغییر رمز</button>${u.role==='admin'?'':'<button class="btn sm red" onclick="delUser()">حذف کاربر</button>'}</div></div>`;
+}
+function mineV(){sel=me.id;return fundCard()+userV(me,false)+myCasesV()+(me.inst.length?'':'<div class="card"><p class="muted">اقساط شما هنوز تعریف نشده است.</p></div>')+pwCard();}
+function userV(u,admin){
+  const tot=u.inst.reduce((s,i)=>s+i.amount,0),paid=u.inst.filter(i=>i.paid).reduce((s,i)=>s+i.amount,0);
+  const pc=tot?Math.round(paid/tot*100):0, mine=u.id===me.id;
+  const caseIt=db.cases.flatMap(c=>c.shares.filter(x=>x.uid===u.id).flatMap(x=>x.items));
+  const overdue=u.inst.filter(i=>status(i)==='late').reduce((a,i)=>a+i.amount,0)+caseIt.filter(i=>istat(i)==='late').reduce((a,i)=>a+i.amount,0);
+  return `<div class="card"><h2>${esc(u.name)}</h2><div class="muted">کد ملی: ${u.nid}</div>
+  <div class="stats" style="margin:12px 0 0;grid-template-columns:repeat(3,1fr)"><div class="stat"><span class="muted">پرداخت‌شده</span><b style="font-size:15px">${fa(paid)}</b></div><div class="stat"><span class="muted">باقی‌مانده</span><b style="font-size:15px">${fa(tot-paid)}</b></div><div class="stat"><span class="muted">معوقه</span><b style="font-size:15px;color:${overdue?'var(--r)':'inherit'}">${fa(overdue)}</b></div></div>
+  <div class="muted" style="margin-top:6px">مبالغ اقساط ماهانه؛ معوقه شامل اقساط مراسم هم می‌شود.</div>
+  <div class="bar"><i style="width:${pc}%"></i></div><div class="muted" style="margin-top:4px">${fa(pc)}٪ پرداخت شده (مبالغ به تومان)</div></div>
+  <div class="card"><h2>اقساط ۱۲ ماهه</h2>${u.inst.length?u.inst.map((i,k)=>{const s=status(i);const yh=(k===0||instYear(u.inst[k-1])!==instYear(i))?`<div class="muted" style="padding:8px 0 2px;font-weight:600">سال مالی ${yl(instYear(i))}</div>`:'';
+  const btns=(mine&&!i.paid?`<button class="btn sm" onclick="startPay(${k})">پرداخت آنلاین</button>`:'')+(admin&&!mine?`<button class="btn sm ${i.paid?'red':'alt'}" onclick="togglePay(${k})">${i.paid?'لغو پرداخت':'ثبت دستی'}</button>`:'');
+  return yh+`<div class="inst row"><div><b>قسط ${fa(u.inst.slice(0,k).filter(x=>instYear(x)===instYear(i)).length+1)}</b> — ${fa(i.amount)}<div class="muted">سررسید: ${fd(i.due)}${i.paid?' · پرداخت: '+fd(i.paid):''}</div></div>
+  <div style="text-align:left"><span class="tag ${s}">${lbl[s]}</span><div style="margin-top:6px">${btns}</div></div></div>`}).join(''):'<p class="muted">قسطی ثبت نشده است.</p>'}</div>`;
+}
+function payV(){
+  const i=payItem();
+  if(pending.done) return `<div class="card" style="text-align:center"><div style="font-size:44px;color:var(--g)">✓</div><h2>پرداخت موفق</h2><p>${pending.cid&&i.kind==='cash'?`مبلغ ${fa(i.amount)} تومان سهم نقدی مراسم ثبت شد.`:`مبلغ ${fa(i.amount)} تومان به موجودی صندوق اضافه شد.`}</p><p class="muted">شماره پیگیری: ${pending.ref}</p><button class="btn" onclick="go('${me.role==='admin'?'mine':'mine'}')">بازگشت به اقساط</button></div>`;
+  if(pending.failed) return `<div class="card" style="text-align:center"><div style="font-size:44px;color:var(--r)">✕</div><h2>پرداخت ناموفق</h2><p class="muted">مبلغی از حساب شما کسر نشد.</p><button class="btn" onclick="go('mine')">بازگشت</button></div>`;
+  return `<div class="card"><h2>درگاه پرداخت (شبیه‌سازی شتاب)</h2>
+  <div class="row"><span class="muted">${i.label}</span><b>${fa(i.amount)} تومان</b></div>
+  <div class="note">این صفحه فقط نمونه‌ی ظاهر درگاه است و به بانک وصل نیست. هیچ اطلاعات کارتی وارد نکنید.</div>
+  <button class="btn" onclick="payResult(true)">شبیه‌سازی پرداخت موفق</button>
+  <button class="btn alt" onclick="payResult(false)">شبیه‌سازی پرداخت ناموفق</button>
+  <button class="btn red" onclick="go('mine')">انصراف</button></div>`;
+}
+
+// ---------- actions ----------
+let pending=null;
+function go(v){view=v;render();}
+function open_(id){sel=id;go('detail');}
+function login(){
+  const nid=digits(document.getElementById('nid').value),pw=document.getElementById('pw').value;
+  const u=db.users.find(x=>x.nid===nid&&x.pass===pw);
+  if(!u){document.getElementById('err').textContent='کد ملی یا رمز عبور اشتباه است';return;}
+  me=u;view=u.role==='admin'?'admin':'mine';render();
+}
+function logout(){me=null;view='login';render();}
+const pd=x=>String(x).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+const yl=y=>pd(y);
+const instYear=i=>{if(i.year)return i.year;const [y,m]=String(i.due).split('/').map(Number);return y;};
+function buildYear(y,fam,start){const f=parseJ(y.firstDue),s0=start||f[1];return Array.from({length:13-s0},(_,k)=>({due:addMonths(f,s0-f[1]+k),amount:y.perPerson*fam,paid:null,year:y.year}));}
+function buildInst(amt,due){return Array.from({length:12},(_,k)=>({due:addMonths(due,k),amount:amt,paid:null}));}
+function createUser(){
+  const g=id=>document.getElementById(id).value.trim(),err=m=>document.getElementById('err').textContent=m;
+  const name=g('n_name'),nid=digits(g('n_nid')),pw=g('n_pw');
+  if(!name)return err('نام را وارد کنید');
+  if(!validNid(nid))return err('کد ملی باید ۱۰ رقم باشد');
+  if(db.users.some(u=>u.nid===nid))return err('این کد ملی قبلاً ثبت شده است');
+  if(pw.length<6)return err('رمز حداقل ۶ کاراکتر باشد');
+  if(!db.years.length)return err('ابتدا سال مالی را تعریف کنید');
+  const ly=db.years[db.years.length-1],[ty,tm]=todayJ().split('/').map(Number);
+  if(ty>ly.year)return err('سال مالی '+ly.year+' تمام شده است؛ ابتدا سال مالی جدید را تعریف کنید');
+  const fam=+digits(g('n_fam'));if(!(fam>=1&&fam<=30))return err('تعداد اعضای خانواده بین ۱ تا ۳۰ باشد');
+  db.users.push({id:db.nextId++,name,nid,pass:pw,role:'user',family:fam,inst:buildYear(ly,fam,ty===ly.year?Math.max(tm,parseJ(ly.firstDue)[1]):0)});save();go('admin');
+}
+function makePlan(){
+  const amt=+digits(document.getElementById('p_amt').value),due=parseJ(document.getElementById('p_due').value),e=document.getElementById('err2');
+  if(!(amt>0))return e.textContent='مبلغ قسط را درست وارد کنید';
+  if(!due)return e.textContent='تاریخ را مثل 1405/01/15 وارد کنید';
+  db.users.find(x=>x.id===sel).inst=buildInst(amt,due);save();render();
+}
+function togglePay(k){const u=db.users.find(x=>x.id===sel),i=u.inst[k];i.paid=i.paid?null:todayJ();save();render();}
+function payItem(){if(pending.cid){const c=db.cases.find(x=>x.id===pending.cid),it=c.shares.find(x=>x.uid===me.id).items[pending.idx];return {amount:it.amount,label:(c.type==='gift'?'پاکت اهدایی: ':'مراسم: ')+c.title+' — '+(it.kind==='cash'?'پرداخت نقدی':'قسط '+fa(c.shares.find(x=>x.uid===me.id).items.slice(0,pending.idx+1).filter(x=>x.kind==='inst').length)),obj:it};}const i=me.inst[pending.k];return {amount:i.amount,label:`قسط ${fa(pending.k+1)} — سررسید ${fd(i.due)}`,obj:i,isInst:true};}
+function startPay(k){pending={k};view='pay';render();}
+function startCasePay(cid,idx){pending={cid,idx};view='pay';render();}
+function payResult(ok){
+  if(!ok){pending.failed=true;return render();}
+  const it=payItem(),i=it.obj;
+  if(i.paid){return go('mine');}
+  i.paid=todayJ();
+  const ref=String(Math.floor(100000+Math.random()*900000));
+  db.txs.push({uid:me.id,k:pending.k,cid:pending.cid,idx:pending.idx,amount:it.amount,date:todayJ(),ref});
+  save();pending.done=true;pending.ref=ref;render();
+}
+function setFam(){const v=+digits(document.getElementById('fam').value);if(!(v>=1&&v<=30))return;const u=db.users.find(x=>x.id===sel);u.family=v;const y=db.years[db.years.length-1];if(y)u.inst.filter(i=>!i.paid&&instYear(i)===y.year).forEach(i=>i.amount=y.perPerson*v);save();render();}
+function resetPw(){const v=document.getElementById('np').value.trim();if(v.length<6)return document.getElementById('err').textContent='رمز حداقل ۶ کاراکتر باشد';db.users.find(x=>x.id===sel).pass=v;save();document.getElementById('err').textContent='رمز تغییر کرد';}
+function delUser(){const b=event.target;if(b.dataset.s!=='1'){b.dataset.s='1';b.textContent='تأیید حذف؟';return;}db.users=db.users.filter(x=>x.id!==sel);save();go('admin');}
+
+// ---------- funeral cases ----------
+const cItems=c=>c.shares.flatMap(x=>x.items);
+const sharesTotal=c=>cItems(c).reduce((a,x)=>a+x.amount,0), sharesPaid=c=>cItems(c).filter(x=>x.paid).reduce((a,x)=>a+x.amount,0);
+const istat=i=>i.paid?'paid':(i.due<todayJ()?'late':'due');
+function casesV(){
+  return `<div class="card"><div class="row"><h2>پرونده‌های مراسم خاکسپاری</h2><button class="btn sm" onclick="go('casenew')">+ پرونده جدید</button></div>
+  ${db.cases.filter(c=>c.type!=='gift').length?db.cases.filter(c=>c.type!=='gift').slice().reverse().map(c=>`<div class="inst row" style="cursor:pointer" onclick="openCase(${c.id})"><div><b>${esc(c.title)}</b><div class="muted">${fd(c.date)} · سهم هر عضو ${fa(c.per)}</div></div><div class="muted">${fa(sharesPaid(c))} از ${fa(sharesTotal(c))}</div></div>`).join(''):'<p class="muted">پرونده‌ای ثبت نشده است.</p>'}</div>`;
+}
+function caseNewV(){
+  return `<div class="card"><h2>پرونده جدید مراسم</h2>
+  <div class="note" style="margin:0 0 6px">موجودی فعلی صندوق: <b>${fa(fund())}</b> تومان</div>
+  <label>عنوان (مثلاً مراسم مرحوم ...)</label><input id="c_title" class="fa">
+  <label>تاریخ مراسم (مثال ${todayJ()})</label><input id="c_date" value="${todayJ()}">
+  <div class="two"><div><label>کل هزینه‌های مراسم (تومان)</label><input id="c_cost" inputmode="numeric" oninput="casePrev()"></div><div><label>جمع پاکت‌های دریافتی</label><input id="c_env" inputmode="numeric" oninput="casePrev()"></div></div>
+  <div class="two"><div><label>تعداد اقساط بازپرداخت (۱ تا ۱۲)</label><input id="c_n" inputmode="numeric" value="6" oninput="casePrev()"></div><div><label>تاریخ اولین قسط</label><input id="c_first" placeholder="${addMonths(parseJ(todayJ()),1)}" value="${addMonths(parseJ(todayJ()),1)}"></div></div>
+  <label>اعضای شرکت‌کننده در تقسیم هزینه</label>
+  ${db.users.map(u=>`<label style="display:flex;gap:8px;align-items:center;color:var(--t);margin:6px 0"><input type="checkbox" class="cp" value="${u.id}" checked onchange="casePrev()" style="width:auto"> ${esc(u.name)}</label>`).join('')}
+  <div class="note" id="c_prev">مبالغ را وارد کنید.</div>
+  <div class="err" id="err"></div><button class="btn" onclick="createCase()">ثبت پرونده</button><button class="btn alt" onclick="go('cases')">بازگشت</button></div>`;
+}
+function caseCalc(cost,env,n,ids,type){
+  const us=db.users.filter(u=>ids.includes(u.id)),persons=us.length;
+  const rem=Math.max(0,cost-env),surplus=Math.max(0,env-cost),F=fund();
+  const adv=type==='gift'?0:Math.min(F,rem),cash=rem-adv;               // صندوق می‌پردازد / کسری نقدی از اعضا
+  const per=persons?Math.ceil(rem/persons):0,perCash=persons?Math.ceil(cash/persons):0;
+  return {us,persons,rem,surplus,adv,cash,per,perCash,perInst:Math.max(0,per-perCash),F,n};
+}
+function casePrev(){
+  const g=id=>document.getElementById(id).value,cost=+digits(g('c_cost'))||0,env=+digits(g('c_env'))||0,n=+digits(g('c_n'))||1;
+  const ids=[...document.querySelectorAll('.cp:checked')].map(x=>+x.value),r=caseCalc(cost,env,n,ids);
+  document.getElementById('c_prev').innerHTML=`باقی‌مانده پس از پاکت‌ها: <b>${fa(r.rem)}</b> ÷ ${fa(r.persons)} عضو = سهم هر عضو <b>${fa(r.per)}</b><br>
+  برداشت از صندوق: <b>${fa(r.adv)}</b>${r.cash?`<br>کسری که فوری از اعضا نقدی گرفته می‌شود: <b>${fa(r.cash)}</b> (هر عضو ${fa(r.perCash)})`:''}<br>
+  بازپرداخت به صندوق: هر عضو ${fa(r.perInst)} در ${fa(Math.min(12,Math.max(1,n)))} قسط`;
+}
+function createCase(){
+  const g=id=>document.getElementById(id).value.trim(),err=m=>document.getElementById('err').textContent=m;
+  const title=g('c_title'),date=parseJ(digits(g('c_date'))),cost=+digits(g('c_cost')),env=+(digits(g('c_env'))||0),n=+digits(g('c_n')),first=parseJ(digits(g('c_first')));
+  if(!title)return err('عنوان را وارد کنید');
+  if(!date)return err('تاریخ مراسم را مثل 1405/01/15 وارد کنید');
+  if(!(cost>0))return err('هزینه کل را وارد کنید');
+  if(env<0)return err('مبلغ پاکت‌ها نامعتبر است');
+  if(!(n>=1&&n<=12))return err('تعداد اقساط بین ۱ تا ۱۲ باشد');
+  if(!first)return err('تاریخ اولین قسط نامعتبر است');
+  const ids=[...document.querySelectorAll('.cp:checked')].map(x=>+x.value);
+  const res=makeCase({title,date,cost,env,n,first,ids,type:'funeral'});if(res.err)return err(res.err);
+  sel=res.c.id;go('casedetail');
+}
+// shared by funeral cases and donated envelopes: envelopes first, then the fund (up to its balance), the rest cash from members;
+// the cost is split equally per participating member and the fund advance is repaid in n installments
+function makeCase({title,date,cost,env,n,first,ids,type}){
+  const r=caseCalc(cost,env,n,ids,type);
+  if(!r.persons)return {err:'حداقل یک شرکت‌کننده انتخاب کنید'};
+  if(!db.nextCase)db.nextCase=1;
+  const dS=date.map((v,i)=>i?pad(v):v).join('/');
+  const shares=r.us.map(u=>{
+    const items=[];
+    if(r.perCash)items.push({kind:'cash',due:dS,amount:r.perCash,paid:null});
+    const tot=r.perInst,base=Math.floor(tot/n);
+    for(let k=0;k<n&&tot>0;k++)items.push({kind:'inst',due:addMonths(first,k),amount:k===n-1?tot-base*(n-1):base,paid:null});
+    return {uid:u.id,count:u.family,items};
+  });
+  const c={id:db.nextCase++,type,title,date:dS,cost,env,rem:r.rem,surplus:r.surplus,adv:r.adv,cash:r.cash,persons:r.persons,per:r.per,n,shares};
+  db.cases.push(c);save();return {c};
+}
+function openCase(id){sel=id;go('casedetail');}
+function itemLabel(i,k,items){return i.kind==='cash'?'پرداخت نقدی فوری':`قسط ${fa(items.slice(0,k+1).filter(x=>x.kind==='inst').length)}`;}
+function caseSummary(c){
+  const row=(a,b,st='')=>`<div class="inst row"><span>${a}</span><b ${st}>${b}</b></div>`;
+  const paid=sharesPaid(c),tot=sharesTotal(c);
+  return row('کل هزینه‌ها',fa(c.cost))+row('پاکت‌های دریافتی','− '+fa(c.env))+row('باقی‌مانده (سهم اعضا)',fa(c.rem))
+  +(c.type==='gift'?'':row('برداشت از صندوق',fa(c.adv)))+(c.cash?row(c.type==='gift'?'دریافت نقدی از اعضا':'کسری نقدی از اعضا',fa(c.cash)):'')+(c.surplus?row('مازاد پاکت‌ها (به صندوق)',fa(c.surplus)):'')
+  +row('تعداد اعضای شرکت‌کننده',fa(c.persons))+row('سهم هر عضو',fa(c.per))
+  +row('جمع‌آوری‌شده',`${fa(paid)} از ${fa(tot)}`,'style="color:var(--g)"')+row('مانده بازپرداخت',fa(tot-paid));
+}
+function ucasesV(){
+  return fundCard()+`<div class="card"><h2>گردش حساب مراسم فوتی</h2><div class="muted">به تفکیک هر متوفی (مبالغ به تومان)</div></div>`+
+  (db.cases.filter(c=>c.type!=='gift').length?db.cases.filter(c=>c.type!=='gift').slice().reverse().map(c=>`<div class="card"><h2>${esc(c.title)}</h2><div class="muted">${fd(c.date)}</div>${caseSummary(c)}</div>`).join(''):'<div class="card"><p class="muted">پرونده‌ای ثبت نشده است.</p></div>');
+}
+function ugiftsV(){
+  const gc=giftRows().slice().reverse(),tot=gc.reduce((a,c)=>a+c.cost,0);
+  return fundCard()+`<div class="card"><div class="row"><h2>پاکت‌های اهدایی به مراسم دیگران</h2><b>${fa(tot)}</b></div>
+  ${gc.map(c=>`<div class="inst"><div class="row"><div><b>${esc(c.title)}</b><div class="muted">${fd(c.date)}</div></div><b>${fa(c.cost)}</b></div><div class="muted">سهم هر عضو: ${fa(c.per)} · جمع‌آوری‌شده ${fa(sharesPaid(c))} از ${fa(sharesTotal(c))}</div></div>`).join('')||'<p class="muted">موردی ثبت نشده است.</p>'}</div>`;
+}
+function caseDetailV(){
+  const c=db.cases.find(x=>x.id===sel);
+  const row=(a,b,st='')=>`<div class="inst row"><span>${a}</span><b ${st}>${b}</b></div>`;
+  return `<button class="btn alt sm" onclick="go('${c.type==='gift'?'gifts':'cases'}')">← بازگشت</button><div style="height:10px"></div>
+  <div class="card"><h2>${c.type==='gift'?'پاکت اهدایی: ':''}${esc(c.title)}</h2><div class="muted">${fd(c.date)}</div>
+  ${row('کل هزینه‌ها',fa(c.cost))}${row('پاکت‌های دریافتی','− '+fa(c.env))}${row('باقی‌مانده (سهم اعضا)',fa(c.rem))}
+  ${c.type==='gift'?'':row('برداشت از صندوق',fa(c.adv))}${c.cash?row(c.type==='gift'?'دریافت نقدی از اعضا':'کسری نقدی از اعضا',fa(c.cash)):''}${c.surplus?row('مازاد پاکت‌ها (به صندوق)',fa(c.surplus)):''}
+  ${row('تعداد اعضای شرکت‌کننده',fa(c.persons))}${row('سهم هر عضو',fa(c.per))}
+  ${row('جمع‌آوری‌شده',`${fa(sharesPaid(c))} از ${fa(sharesTotal(c))}`,'style="color:var(--g)"')}</div>
+  ${c.shares.map(x=>{const u=db.users.find(y=>y.id===x.uid);return `<div class="card"><div class="row"><b>${esc(u?u.name:'-')}</b></div>
+  ${x.items.map((i,k)=>{const st=istat(i);return `<div class="inst row"><div>${itemLabel(i,k,x.items)} — ${fa(i.amount)}<div class="muted">${fd(i.due)}${i.paid?' · پرداخت: '+fd(i.paid):''}</div></div><div style="text-align:left"><span class="tag ${st}">${lbl[st]}</span><div style="margin-top:6px"><button class="btn sm ${i.paid?'red':'alt'}" onclick="toggleItem(${c.id},${c.shares.indexOf(x)},${k})">${i.paid?'لغو':'ثبت دستی'}</button></div></div></div>`}).join('')||'<p class="muted">سهمی ندارد.</p>'}</div>`}).join('')}
+  <div class="card"><button class="btn red" onclick="delCase(${c.id})">حذف پرونده</button><div class="muted" style="margin-top:6px">فقط پرونده‌ای که هیچ پرداختی ندارد قابل حذف است. با حذف، برداشت از صندوق هم برگردانده می‌شود.</div><div class="err" id="err"></div></div>`;
+}
+function toggleItem(cid,si,k){const x=db.cases.find(c=>c.id===cid).shares[si].items[k];x.paid=x.paid?null:todayJ();save();render();}
+function delCase(id){const c=db.cases.find(x=>x.id===id);if(cItems(c).some(x=>x.paid))return document.getElementById('err').textContent='این پرونده پرداخت دارد و حذف نمی‌شود';db.cases=db.cases.filter(x=>x.id!==id);save();go(c.type==='gift'?'gifts':'cases');}
+function myCasesV(){
+  const mine=db.cases.map(c=>({c,sh:c.shares.find(x=>x.uid===me.id)})).filter(x=>x.sh);
+  if(!mine.length)return '';
+  return mine.slice().reverse().map(({c,sh})=>`<div class="card"><h2>${c.type==='gift'?'پاکت اهدایی':'مراسم'}: ${esc(c.title)}</h2><div class="muted">${fd(c.date)}</div>
+  <div class="muted" style="margin:6px 0">هزینه ${fa(c.cost)} − پاکت ${fa(c.env)} = ${fa(c.rem)}؛ ÷ ${fa(c.persons)} عضو = ${fa(c.per)} برای هر عضو</div>
+  ${sh.items.map((i,k)=>{const st=istat(i);return `<div class="inst row"><div><b>${itemLabel(i,k,sh.items)}</b> — ${fa(i.amount)}<div class="muted">سررسید: ${fd(i.due)}</div></div><div style="text-align:left"><span class="tag ${st}">${lbl[st]}</span>${i.paid?'':`<div style="margin-top:6px"><button class="btn sm" onclick="startCasePay(${c.id},${k})">پرداخت آنلاین</button></div>`}</div></div>`}).join('')}</div>`).join('');
+}
+
+// ---------- donated envelopes (gifts to others' funerals) ----------
+function giftRows(){return db.cases.filter(c=>c.type==='gift');}
+function giftsV(){
+  const gc=giftRows().slice().reverse(),tot=gc.reduce((a,c)=>a+c.cost,0);
+  return `<div class="card"><h2>ثبت پاکت اهدایی به مراسم دیگران</h2>
+  <div class="note" style="margin:0 0 6px">مبلغ پاکت از موجودی صندوق کسر نمی‌شود؛ به‌طور مساوی بین اعضای شرکت‌کننده تقسیم و مستقیماً به‌صورت نقدی از اعضا دریافت می‌شود.</div>
+  <label>نام شخص فوتی</label><input id="g_name" class="fa">
+  <label>تاریخ (مثال ${todayJ()})</label><input id="g_date" value="${todayJ()}">
+  <label>مبلغ پاکت (تومان)</label><input id="g_amt" inputmode="numeric" oninput="giftPrev()">
+  <label>اعضای شرکت‌کننده در تقسیم</label>
+  ${db.users.map(u=>`<label style="display:flex;gap:8px;align-items:center;color:var(--t);margin:6px 0"><input type="checkbox" class="gp" value="${u.id}" checked onchange="giftPrev()" style="width:auto"> ${esc(u.name)}</label>`).join('')}
+  <div class="note" id="g_prev">مبلغ را وارد کنید.</div>
+  <div class="err" id="err"></div><button class="btn" onclick="addGift()">ثبت پاکت اهدایی</button></div>
+  <div class="card"><div class="row"><h2>پاکت‌های اهدایی</h2><b>${fa(tot)}</b></div>
+  ${gc.map(c=>`<div class="inst row" style="cursor:pointer" onclick="openCase(${c.id})"><div><b>${esc(c.title)}</b><div class="muted">${fd(c.date)} · سهم هر عضو ${fa(c.per)}</div></div><div style="text-align:left"><b>${fa(c.cost)}</b><div class="muted">${fa(sharesPaid(c))} از ${fa(sharesTotal(c))}</div></div></div>`).join('')||'<p class="muted">موردی ثبت نشده است.</p>'}</div>`;
+}
+function giftPrev(){
+  const amt=+digits(document.getElementById('g_amt').value)||0;
+  const ids=[...document.querySelectorAll('.gp:checked')].map(x=>+x.value),r=caseCalc(amt,0,1,ids,'gift');
+  document.getElementById('g_prev').innerHTML=`سهم هر عضو: <b>${fa(r.per)}</b> (${fa(amt)} ÷ ${fa(r.persons)} عضو) — نقدی و فوری`;
+}
+function addGift(){
+  const g=id=>document.getElementById(id).value.trim(),err=m=>document.getElementById('err').textContent=m;
+  const name=g('g_name'),date=parseJ(digits(g('g_date'))),amt=+digits(g('g_amt'));
+  if(!name)return err('نام شخص فوتی را وارد کنید');
+  if(!date)return err('تاریخ را مثل 1405/01/15 وارد کنید');
+  if(!(amt>0))return err('مبلغ را وارد کنید');
+  const ids=[...document.querySelectorAll('.gp:checked')].map(x=>+x.value);
+  const res=makeCase({title:name,date,cost:amt,env:0,n:1,first:date,ids,type:'gift'});if(res.err)return err(res.err);
+  sel=res.c.id;go('casedetail');
+}
+function delGift(id){const b=event.target;if(b.dataset.s!=='1'){b.dataset.s='1';b.textContent='تأیید؟';return;}db.gifts=db.gifts.filter(g=>g.id!==id);save();render();}
+
+// ---------- change own password (national ID can't be changed) ----------
+function pwCard(){
+  return `<div class="card"><h2>تغییر رمز عبور</h2>
+  <div class="muted">کد ملی (نام کاربری) قابل تغییر نیست: ${me.nid}</div>
+  <label>رمز فعلی</label><input id="pw_old" type="password">
+  <label>رمز جدید (حداقل ۶ کاراکتر)</label><input id="pw_new" type="password">
+  <label>تکرار رمز جدید</label><input id="pw_new2" type="password">
+  <div class="err" id="pw_err"></div><button class="btn" onclick="changePw()">تغییر رمز</button></div>`;
+}
+function changePw(){
+  const g=id=>document.getElementById(id).value,e=document.getElementById('pw_err');
+  e.style.color='var(--r)';
+  if(g('pw_old')!==me.pass)return e.textContent='رمز فعلی اشتباه است';
+  if(g('pw_new').length<6)return e.textContent='رمز جدید حداقل ۶ کاراکتر باشد';
+  if(g('pw_new')!==g('pw_new2'))return e.textContent='تکرار رمز با رمز جدید یکسان نیست';
+  if(g('pw_new')===g('pw_old'))return e.textContent='رمز جدید باید با رمز فعلی فرق داشته باشد';
+  me.pass=g('pw_new');save();
+  ['pw_old','pw_new','pw_new2'].forEach(i=>document.getElementById(i).value='');
+  e.style.color='var(--g)';e.textContent='رمز عبور تغییر کرد';
+}
+
+// ---------- bylaws (viewable by everyone, editable by admin) ----------
+let editBylaws=false;
+function bylawsV(){
+  const back=`<button class="btn alt sm" onclick="editBylaws=false;go('${me.role==='admin'?'admin':'mine'}')">← بازگشت</button><div style="height:10px"></div>`;
+  if(editBylaws&&me.role==='admin')return back+`<div class="card"><h2>ویرایش اساسنامه</h2><textarea id="bl_txt" style="width:100%;min-height:60vh;padding:10px;border:1px solid var(--b);border-radius:10px;font-family:inherit;font-size:14px;line-height:1.9">${esc(db.bylaws)}</textarea>
+  <button class="btn" onclick="saveBylaws()">ذخیره</button><button class="btn alt" onclick="editBylaws=false;render()">انصراف</button><button class="btn red" onclick="resetBylaws()">بازگشت به متن پیش‌نویس اولیه</button></div>`;
+  return back+`<div class="card"><div style="white-space:pre-wrap;line-height:2;font-size:14.5px">${esc(db.bylaws)}</div></div>`+(me.role==='admin'?`<button class="btn alt" onclick="editBylaws=true;render()">ویرایش اساسنامه</button>`:'');
+}
+function saveBylaws(){const v=document.getElementById('bl_txt').value.trim();if(!v)return;db.bylaws=v;save();editBylaws=false;render();}
+function resetBylaws(){const b=event.target;if(b.dataset.s!=='1'){b.dataset.s='1';b.textContent='تأیید بازگشت به پیش‌نویس؟';return;}db.bylaws=BYLAWS_DEFAULT;save();editBylaws=false;render();}
+render();
+</script>
+</body>
+</html>
